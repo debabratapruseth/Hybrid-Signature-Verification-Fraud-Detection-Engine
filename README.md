@@ -1,4 +1,4 @@
-# Hybrid Signature Verification
+# Signature Forensic Analysis
 
 A hybrid offline handwritten signature verification system that combines **Deep Learning**, **Structural AI**, and **Document Forensics** to support explainable signature verification and review prioritization.
 
