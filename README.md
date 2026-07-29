@@ -102,9 +102,10 @@ This project is designed to run on **Google Colab** using a **GPU runtime**, wit
 - OpenAI API Key (for report generation)
 
 ## Step 1: Prepare the Project
-1. Download the project archive.
-2. Extract **`Signature-Forensic-Prototype.zip`** into your Google Drive.
-3. Open the notebooks from Google Colab.
+1. Extract **`Signature-Forensic-Prototype.zip`** into your Google Drive.
+2. Download dataset from internet and store in Google Drive for training
+   - https://docs.ultralytics.com/datasets/detect/signature for YOLO training
+   - HSig260 dataset for Siamese ResNet-18 training
 
 ## Step 2: Train the Models (One-Time Setup)
 Open:
@@ -125,26 +126,16 @@ colab_working/complete_signature_case_runner.ipynb
 The notebook will prompt you to upload:
 - 1 Questioned Signature
 - 3 Reference Signatures
+
 The pipeline will automatically execute all three verification branches:
 - Branch 1 – Learned Signature Verification
 - Branch 2 – Structural Signature Comparison
 - Branch 3 – Document Forensics
 
-## Step 4: Generate Reports
 The final stage uses an **OpenAI LLM** to generate:
 - Executive Stakeholder Report
 - Technical Fusion Report
 Before running this step, provide your OpenAI API key or configure it as an environment variable.
-
-## Outputs
-The notebook generates:
-- Model predictions
-- Structural comparison results
-- Document forensics results
-- Fusion decision
-- Executive report
-- Technical report
-- Evidence dashboard
 
 
 ## License
