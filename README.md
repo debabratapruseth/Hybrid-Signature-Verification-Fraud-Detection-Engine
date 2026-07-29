@@ -89,12 +89,63 @@ A hybrid offline handwritten signature verification system that combines **Deep 
 - Reliability-aware fusion summary
 
 
+
 # How to Use
 
-The Code run uses Google Colab as run time environment ( Notebook and GPU). Google Drive is used for data storage. 
-You can refactor to use VSCode and GitHub also. However you will need GPU for initial training. 
+This project is designed to run on **Google Colab** using a **GPU runtime**, with **Google Drive** used for storing datasets, model checkpoints, and outputs.
+> **Note:** You can refactor the project to run locally using **VS Code** and **GitHub**. However, a GPU is recommended for training the deep learning models.
 
-- Extract the folder 
+## Prerequisites
+- Google Account
+- Google Drive
+- Google Colab
+- OpenAI API Key (for report generation)
+
+## Step 1: Prepare the Project
+1. Download the project archive.
+2. Extract **`Signature-Forensic-Prototype.zip`** into your Google Drive.
+3. Open the notebooks from Google Colab.
+
+## Step 2: Train the Models (One-Time Setup)
+Open:
+```text
+colab_working/train_models_cells.ipynb
+```
+Run all cells to train the required models:
+- YOLO Signature Detector
+- ResNet-18 Siamese Signature Verification Model
+The trained model checkpoints will automatically be saved for future use.
+> This step only needs to be performed once unless you wish to retrain the models.
+
+## Step 3: Run a Signature Verification Case
+Open:
+```text
+colab_working/complete_signature_case_runner.ipynb
+```
+The notebook will prompt you to upload:
+- 1 Questioned Signature
+- 3 Reference Signatures
+The pipeline will automatically execute all three verification branches:
+- Branch 1 – Learned Signature Verification
+- Branch 2 – Structural Signature Comparison
+- Branch 3 – Document Forensics
+
+## Step 4: Generate Reports
+The final stage uses an **OpenAI LLM** to generate:
+- Executive Stakeholder Report
+- Technical Fusion Report
+Before running this step, provide your OpenAI API key or configure it as an environment variable.
+
+## Outputs
+The notebook generates:
+- Model predictions
+- Structural comparison results
+- Document forensics results
+- Fusion decision
+- Executive report
+- Technical report
+- Evidence dashboard
+
 
 ## License
 
