@@ -1,0 +1,23 @@
+# Core numerical, image, and configuration libraries
+numpy>=1.26,<3
+PyYAML>=6.0,<7
+Pillow>=10.0,<12
+opencv-python-headless>=4.9,<5
+PyMuPDF>=1.24,<2
+scikit-image>=0.22,<1
+scipy>=1.11,<2
+ImageHash>=4.3,<5
+
+# Detection, segmentation, and verification
+ultralytics>=8.3,<9
+torch>=2.2,<3
+torchvision>=0.17,<1
+transformers>=4.45,<6
+safetensors>=0.4,<1
+
+# Evaluation and visualisation
+scikit-learn>=1.4,<2
+matplotlib>=3.8,<4
+
+# OpenAI-assisted reporting
+openai>=1.50,<3

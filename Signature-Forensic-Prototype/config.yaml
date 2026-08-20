@@ -1,0 +1,235 @@
+# Prototype configuration.
+# Thresholds below are educational starting points. Calibrate them on a
+# representative, writer-disjoint validation set before interpreting results.
+
+project:
+  # Human-readable metadata and reproducibility controls.
+  name: "AI Signature Detection, Verification and Forensic Analysis"
+  random_seed: 42
+  output_directory: "outputs"
+  preserve_original_evidence: true
+
+document:
+  # PDF pages are rendered to RGB at this DPI before any analysis.
+  supported_extensions: [".pdf", ".png", ".jpg", ".jpeg"]
+  pdf_render_dpi: 200
+  # Smaller pages remain usable but receive a quality warning.
+  minimum_width: 600
+  minimum_height: 600
+  # Large pages are scaled down for bounded GPU/CPU use; aspect ratio is kept.
+  maximum_analysis_dimension: 2400
+  # Mean grayscale levels outside this interval trigger brightness warnings.
+  dark_brightness_threshold: 35
+  bright_brightness_threshold: 245
+  # Laplacian variance below this value indicates possible blur.
+  blur_variance_threshold: 45.0
+  extreme_skew_degrees: 15.0
+  # CLAHE and denoising affect only the working image, never preserved evidence.
+  contrast_clip_limit: 2.0
+  contrast_tile_grid_size: 8
+  denoise_strength: 5
+
+detection:
+  # This must be a checkpoint trained to recognize the class "signature".
+  model_path: "models/yolo_signature_detector.pt"
+  base_model: "yolo11n.pt"
+  class_names:
+    0: "signature"
+  confidence_threshold: 0.25
+  # Overlapping predictions above this IoU are suppressed by YOLO.
+  iou_threshold: 0.50
+  image_size: 1280
+  # Box area is measured relative to the full page for quality warnings.
+  minimum_box_area_ratio: 0.0005
+  maximum_box_area_ratio: 0.35
+  boundary_margin_pixels: 3
+
+segmentation:
+  # SAM is downloaded through Hugging Face and prompted with the accepted box.
+  model_name: "facebook/sam-vit-base"
+  # These rules select and assess SAM candidate masks; they are not identity
+  # or authenticity thresholds.
+  minimum_mask_area_ratio: 0.01
+  maximum_mask_area_ratio: 0.70
+  maximum_boundary_contact_ratio: 0.50
+  minimum_ink_agreement: 0.25
+  rectangularity_warning_threshold: 0.90
+
+cleaning:
+  # Adaptive thresholding estimates dark ink under changing page illumination.
+  adaptive_threshold_block_size: 31
+  adaptive_threshold_constant: 11
+  minimum_component_area: 4
+  maximum_component_area_ratio: 0.80
+  line_detection_threshold: 50
+  minimum_line_length: 30
+  maximum_line_gap: 8
+  line_removal_width: 1
+  closing_kernel_size: 2
+  # Cleaning is rolled back when it removes too much ink or changes too many
+  # skeleton endpoints.
+  maximum_foreground_removal_ratio: 0.35
+  canvas_width: 384
+  canvas_height: 192
+  canvas_padding: 12
+  maximum_endpoint_change_ratio: 0.50
+
+verification:
+  # The checkpoint and calibration are persistent inference artifacts.
+  model_path: "models/siamese_resnet18.pt"
+  calibration_path: "models/verification_calibration.json"
+  writer_split_path: "models/writer_split.json"
+  training_history_path: "models/siamese_training_history.json"
+  embedding_dimension: 256
+  # All signatures are transformed to this ResNet input size.
+  input_width: 224
+  input_height: 224
+  minimum_reference_count: 3
+  recommended_reference_count: 5
+  # A large range across reference scores forces manual review.
+  score_spread_warning: 0.20
+  # Values below are retained training settings. The consolidated case runner
+  # does not retrain the model.
+  epochs: 10
+  batch_size: 32
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  contrastive_margin: 1.0
+  data_loader_workers: 2
+  positive_pairs_per_writer: 40
+  skilled_negative_pairs_per_writer: 20
+  random_negative_pairs_per_writer: 20
+  train_writer_fraction: 0.80
+  validation_writer_fraction: 0.10
+  uncertainty_margin: 0.05
+  # Replace after ROC/EER/FAR/FRR calibration on validation data.
+  provisional_consistent_similarity: 0.80
+  elevated_inconsistency_similarity: 0.55
+  imagenet_mean: [0.485, 0.456, 0.406]
+  imagenet_std: [0.229, 0.224, 0.225]
+
+forensics:
+  # Branch 1 explainable alignment and duplicate-screening support.
+  minimum_foreground_ratio: 0.01
+  maximum_foreground_ratio: 0.50
+  minimum_orb_keypoints: 8
+  orb_feature_count: 1000
+  orb_ratio_test: 0.75
+  minimum_alignment_matches: 8
+  ransac_reprojection_threshold: 5.0
+  line_overlap_warning_ratio: 0.10
+
+duplicate_detection:
+  # A possible duplicate requires multiple supporting methods unless normalized
+  # images are cryptographically identical.
+  perceptual_hash_size: 16
+  perceptual_hash_distance_warning: 8
+  minimum_good_matches: 12
+  good_match_ratio_warning: 0.65
+  minimum_ransac_inliers: 8
+  ransac_inlier_ratio_warning: 0.60
+
+# Branch 2: explainable geometry descriptors. The weights combine descriptive
+# similarities for comparison with reference variation; they are not universal
+# authenticity thresholds.
+geometry:
+  canvas_width: 512
+  canvas_height: 256
+  canvas_padding: 16
+  contour_sample_points: 256
+  fourier_coefficients: 32
+  shape_context_points: 100
+  curvature_neighbourhood: 4
+  overlay_tolerance_pixels: 3.0
+  metric_weights:
+    hu: 0.15
+    fourier: 0.20
+    shape_context: 0.25
+    contour: 0.15
+    graph: 0.15
+    critical_points: 0.10
+
+# Branch 3: document-level editing and reuse screening. These thresholds are
+# prototype review triggers, not proof of manipulation.
+document_forensics:
+  orb_feature_count: 2000
+  orb_ratio_test: 0.75
+  ransac_reprojection_threshold: 5.0
+  minimum_good_matches: 12
+  minimum_ransac_inliers: 10
+  ransac_inlier_ratio_warning: 0.75
+  good_match_ratio_warning: 0.65
+  perceptual_hash_size: 16
+  perceptual_hash_distance_warning: 4
+  jpeg_recompression_quality: 90
+  ela_z_score_warning: 2.5
+  noise_blur_sigma: 1.2
+  noise_surrounding_margin: 40
+  noise_flat_gradient_threshold: 12.0
+  noise_log_ratio_warning: 0.50
+  minimum_copy_paste_matches: 6
+  minimum_copy_paste_inliers: 6
+  copy_paste_inlier_ratio_warning: 0.70
+  template_minimum_scale: 0.75
+  template_maximum_scale: 1.30
+  template_scale_steps: 12
+  template_match_score_warning: 0.72
+  template_phase_response_warning: 0.05
+  risk_weights:
+    copy_paste: 0.35
+    compression: 0.20
+    noise: 0.20
+    duplicate: 0.25
+  manual_review_risk: 0.30
+  elevated_screening_risk: 0.60
+
+quality:
+  # Branch 1 quality gates. Failed gates can block a lower-priority result even
+  # when the weighted numerical score is low.
+  minimum_overall_score: 0.60
+  minimum_segmentation_score: 0.55
+  minimum_cleaning_score: 0.55
+  maximum_missing_stage_fraction: 0.25
+
+risk_weights:
+  # Branch 1 starting weights; verification is later reduced when external
+  # validation is weak, then effective weights are renormalized.
+  verification: 0.45
+  quality: 0.20
+  forensic: 0.20
+  duplicate: 0.15
+
+risk_decisions:
+  # These boundaries apply to Branch 1's review-priority score, not probability.
+  provisionally_consistent_maximum: 0.30
+  manual_review_maximum: 0.65
+  possible_digital_reuse_minimum: 0.70
+  insufficient_quality_maximum_quality_score: 0.45
+
+reporting:
+  # Legacy/general reporting preferences retained for compatibility. Final
+  # consolidated reports use the branch_fusion section below.
+  openai_model: "gpt-4.1-mini"
+  use_low_resolution_images: false
+  maximum_image_dimension: 768
+  api_key_environment_variable: "OPENAI_API_KEY"
+  fallback_template_when_unavailable: true
+
+branch_fusion:
+  # OpenAI explains the deterministic result but does not calculate it.
+  openai_model: "gpt-5.6-terra"
+  api_key_environment_variable: "OPENAI_API_KEY"
+  branch_weights:
+    # Starting importance before per-run reliability adjustment.
+    branch1: 0.45
+    branch2: 0.35
+    branch3: 0.20
+  branch2_maximum_reliability: 0.50
+  # Branch 2 reaches its allowed maximum reliability after this many
+  # reference-to-reference pairs; three references provide only three pairs.
+  branch2_pairs_for_full_reliability: 20
+  # Applied when sparse signature content makes Branch 3 ORB evidence absent.
+  branch3_limited_feature_factor: 0.75
+  minimum_reliability_for_lower_priority: 0.60
+  lower_review_boundary: 0.30
+  elevated_review_boundary: 0.65
